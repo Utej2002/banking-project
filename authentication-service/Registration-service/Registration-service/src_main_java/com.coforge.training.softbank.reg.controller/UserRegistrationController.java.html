@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>UserRegistrationController.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">UserRegistrationControllerTest (20-Dec-2024 4:20:52 pm)</a> &gt; <a href="../../index.html" class="el_group">Registration-service</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">com.coforge.training.softbank.reg.controller</a> &gt; <span class="el_source">UserRegistrationController.java</span></div><h1>UserRegistrationController.java</h1><pre class="source lang-java linenums">package com.coforge.training.softbank.reg.controller;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.coforge.training.softbank.reg.dto.AccountRequestDTO;
+import com.coforge.training.softbank.reg.model.AccountRequest;
+import com.coforge.training.softbank.reg.model.UserProfile;
+import com.coforge.training.softbank.reg.service.UserRegistrationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+/**
+* User   : Singuluri.Kumar
+* Date   : 14-Dec-2024
+* Time   : 8:58:36 pm
+* Project:registration-service
+**/
+
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/registration&quot;)
+public class UserRegistrationController {
+ 
+    private final UserRegistrationService registrationService;
+ 
+<span class="fc" id="L39">    public UserRegistrationController(UserRegistrationService registrationService) {</span>
+<span class="fc" id="L40">        this.registrationService = registrationService;</span>
+<span class="fc" id="L41">    }</span>
+ 
+    @PostMapping(&quot;/create-account&quot;)
+    public ResponseEntity&lt;String&gt; createAccountRequest(@RequestParam(&quot;userProfile&quot;) String userProfileJson,
+                                                       @RequestParam(&quot;accountType&quot;) String accountType,
+                                                       @RequestParam(&quot;aadharPdf&quot;) MultipartFile aadharPdf,
+                                                       @RequestParam(&quot;passportPhoto&quot;) MultipartFile passportPhoto) {
+        try {
+            // Convert userProfileJson to UserProfile object
+<span class="fc" id="L50">            ObjectMapper objectMapper = new ObjectMapper();</span>
+<span class="fc" id="L51">            UserProfile userProfile = objectMapper.readValue(userProfileJson, UserProfile.class);</span>
+
+            // Convert MultipartFile to byte[]
+<span class="fc" id="L54">            byte[] aadharPdfBytes = aadharPdf.getBytes();</span>
+<span class="fc" id="L55">            byte[] passportPhotoBytes = passportPhoto.getBytes();</span>
+
+<span class="fc" id="L57">            String response = registrationService.createAccountRequest(userProfile, accountType, aadharPdfBytes, passportPhotoBytes);</span>
+<span class="fc" id="L58">            return new ResponseEntity&lt;&gt;(response, HttpStatus.CREATED);</span>
+<span class="nc" id="L59">        } catch (IOException e) {</span>
+<span class="nc" id="L60">            return new ResponseEntity&lt;&gt;(&quot;Error processing request&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+    }
+    
+    @GetMapping(&quot;/verify-account&quot;)
+    public ResponseEntity&lt;Boolean&gt; verifyAccount(@RequestParam String accountNo) {
+<span class="fc" id="L66">        boolean isApproved = registrationService.isAccountApproved(accountNo);</span>
+<span class="fc" id="L67">        return new ResponseEntity&lt;&gt;(isApproved, HttpStatus.OK);</span>
+    }
+    
+    @GetMapping(&quot;/account-requests&quot;)
+    public ResponseEntity&lt;List&lt;AccountRequestDTO&gt;&gt; getPendingAccountRequests() {
+<span class="fc" id="L72">        List&lt;AccountRequest&gt; pendingRequests = registrationService.getPendingAccountRequests();</span>
+<span class="fc" id="L73">        List&lt;AccountRequestDTO&gt; response = pendingRequests.stream().map(this::convertToDTO).collect(Collectors.toList());</span>
+<span class="fc" id="L74">        return new ResponseEntity&lt;&gt;(response, HttpStatus.OK);</span>
+    }
+ 
+    @PutMapping(&quot;/account-requests/approve/{accountNo}&quot;)
+    public ResponseEntity&lt;String&gt; approveAccount(@PathVariable String accountNo) {
+<span class="fc" id="L79">        boolean success = registrationService.approveAccount(accountNo);</span>
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">        if (success) {</span>
+<span class="fc" id="L81">            return new ResponseEntity&lt;&gt;(&quot;Account approved successfully&quot;, HttpStatus.OK);</span>
+        } else {
+<span class="nc" id="L83">            return new ResponseEntity&lt;&gt;(&quot;Account not found&quot;, HttpStatus.NOT_FOUND);</span>
+        }
+    }
+ 
+    @PutMapping(&quot;/account-requests/reject/{accountNo}&quot;)
+    public ResponseEntity&lt;String&gt; rejectAccount(@PathVariable String accountNo) {
+<span class="fc" id="L89">        boolean success = registrationService.rejectAccount(accountNo);</span>
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">        if (success) {</span>
+<span class="fc" id="L91">            return new ResponseEntity&lt;&gt;(&quot;Account rejected successfully&quot;, HttpStatus.OK);</span>
+        } else {
+<span class="nc" id="L93">            return new ResponseEntity&lt;&gt;(&quot;Account not found&quot;, HttpStatus.NOT_FOUND);</span>
+        }
+    }
+ 
+    public AccountRequestDTO convertToDTO(AccountRequest accountRequest) {
+<span class="fc" id="L98">        AccountRequestDTO dto = new AccountRequestDTO();</span>
+<span class="fc" id="L99">        dto.setId(accountRequest.getId());</span>
+<span class="fc" id="L100">        dto.setAccountNo(accountRequest.getAccountNo());</span>
+<span class="fc" id="L101">        dto.setAccountType(accountRequest.getAccountType());</span>
+<span class="fc" id="L102">        dto.setStatus(accountRequest.getStatus());</span>
+<span class="fc" id="L103">        dto.setCreatedAt(accountRequest.getCreatedAt());</span>
+<span class="fc" id="L104">        dto.setApprovedAt(accountRequest.getApprovedAt());</span>
+<span class="fc" id="L105">        dto.setAadharPdf(accountRequest.getAadharPdf());</span>
+<span class="fc" id="L106">        dto.setPassportPhoto(accountRequest.getPassportPhoto());</span>
+<span class="fc" id="L107">        return dto;</span>
+    }
+}
+
+
+
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span>UserRegistrationControllerTest (20-Dec-2024 4:20:52 pm)</div></body></html>

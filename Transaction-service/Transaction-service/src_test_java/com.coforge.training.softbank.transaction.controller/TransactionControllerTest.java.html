@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TransactionControllerTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">TransactionControllerTest (20-Dec-2024 6:20:32 pm)</a> &gt; <a href="../../index.html" class="el_group">Transaction-service</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">com.coforge.training.softbank.transaction.controller</a> &gt; <span class="el_source">TransactionControllerTest.java</span></div><h1>TransactionControllerTest.java</h1><pre class="source lang-java linenums">package com.coforge.training.softbank.transaction.controller;
+
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.coforge.training.softbank.transaction.dto.NEFTTransactionDTO;
+import com.coforge.training.softbank.transaction.dto.UPITransactionDTO;
+import com.coforge.training.softbank.transaction.model.NEFTTransaction;
+import com.coforge.training.softbank.transaction.model.UPITransaction;
+import com.coforge.training.softbank.transaction.service.TransactionService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+<span class="fc" id="L34">public class TransactionControllerTest {</span>
+
+    @Autowired
+    private MockMvc mockMvc;
+    @MockitoBean
+    private TransactionService transactionService;
+
+    private NEFTTransactionDTO neftTransactionDTO;
+    private UPITransactionDTO upiTransactionDTO;
+    private NEFTTransaction neftTransaction;
+    private UPITransaction upiTransaction;
+
+    @BeforeEach
+    public void setUp() {
+<span class="fc" id="L48">        MockitoAnnotations.openMocks(this);</span>
+
+<span class="fc" id="L50">        ObjectMapper objectMapper = new ObjectMapper();</span>
+<span class="fc" id="L51">        objectMapper.registerModule(new JavaTimeModule());</span>
+
+<span class="fc" id="L53">        neftTransactionDTO = new NEFTTransactionDTO();</span>
+<span class="fc" id="L54">        neftTransactionDTO.setId(1L);</span>
+<span class="fc" id="L55">        neftTransactionDTO.setFromAccount(&quot;1234567890&quot;);</span>
+<span class="fc" id="L56">        neftTransactionDTO.setToAccount(&quot;0987654321&quot;);</span>
+<span class="fc" id="L57">        neftTransactionDTO.setAmount(BigDecimal.valueOf(1000));</span>
+<span class="fc" id="L58">        neftTransactionDTO.setTransactionType(&quot;NEFT&quot;);</span>
+<span class="fc" id="L59">        neftTransactionDTO.setRemarks(&quot;Test NEFT Transaction&quot;);</span>
+<span class="fc" id="L60">        neftTransactionDTO.setTransactionDate(LocalDateTime.now());</span>
+<span class="fc" id="L61">        neftTransactionDTO.setBalanceAfterTransaction(BigDecimal.valueOf(9000));</span>
+<span class="fc" id="L62">        neftTransactionDTO.setTransactionPassword(&quot;password&quot;);</span>
+
+<span class="fc" id="L64">        upiTransactionDTO = new UPITransactionDTO();</span>
+<span class="fc" id="L65">        upiTransactionDTO.setId(1L);</span>
+<span class="fc" id="L66">        upiTransactionDTO.setFromUpiId(&quot;user@upi&quot;);</span>
+<span class="fc" id="L67">        upiTransactionDTO.setToUpiId(&quot;merchant@upi&quot;);</span>
+<span class="fc" id="L68">        upiTransactionDTO.setAmount(BigDecimal.valueOf(500));</span>
+<span class="fc" id="L69">        upiTransactionDTO.setTransactionType(&quot;UPI&quot;);</span>
+<span class="fc" id="L70">        upiTransactionDTO.setRemarks(&quot;Test UPI Transaction&quot;);</span>
+<span class="fc" id="L71">        upiTransactionDTO.setTransactionDate(LocalDateTime.now());</span>
+<span class="fc" id="L72">        upiTransactionDTO.setBalanceAfterTransaction(BigDecimal.valueOf(9500));</span>
+<span class="fc" id="L73">        upiTransactionDTO.setTransactionPassword(&quot;password&quot;);</span>
+
+<span class="fc" id="L75">        neftTransaction = new NEFTTransaction();</span>
+<span class="fc" id="L76">        neftTransaction.setId(1L);</span>
+<span class="fc" id="L77">        neftTransaction.setFromAccount(&quot;1234567890&quot;);</span>
+<span class="fc" id="L78">        neftTransaction.setToAccount(&quot;0987654321&quot;);</span>
+<span class="fc" id="L79">        neftTransaction.setAmount(BigDecimal.valueOf(1000));</span>
+<span class="fc" id="L80">        neftTransaction.setTransactionType(&quot;NEFT&quot;);</span>
+<span class="fc" id="L81">        neftTransaction.setRemarks(&quot;Test NEFT Transaction&quot;);</span>
+<span class="fc" id="L82">        neftTransaction.setTransactionDate(LocalDateTime.now());</span>
+<span class="fc" id="L83">        neftTransaction.setBalanceAfterTransaction(BigDecimal.valueOf(9000));</span>
+
+<span class="fc" id="L85">        upiTransaction = new UPITransaction();</span>
+<span class="fc" id="L86">        upiTransaction.setId(1L);</span>
+<span class="fc" id="L87">        upiTransaction.setFromUpiId(&quot;user@upi&quot;);</span>
+<span class="fc" id="L88">        upiTransaction.setToUpiId(&quot;merchant@upi&quot;);</span>
+<span class="fc" id="L89">        upiTransaction.setAmount(BigDecimal.valueOf(500));</span>
+<span class="fc" id="L90">        upiTransaction.setTransactionType(&quot;UPI&quot;);</span>
+<span class="fc" id="L91">        upiTransaction.setRemarks(&quot;Test UPI Transaction&quot;);</span>
+<span class="fc" id="L92">        upiTransaction.setTransactionDate(LocalDateTime.now());</span>
+<span class="fc" id="L93">        upiTransaction.setBalanceAfterTransaction(BigDecimal.valueOf(9500));</span>
+<span class="fc" id="L94">    }</span>
+
+    @Test
+    public void testPerformNeftTransaction() throws Exception {
+<span class="fc" id="L98">        when(transactionService.performNeftTransaction(neftTransactionDTO)).thenReturn(&quot;Transaction Successful&quot;);</span>
+
+<span class="fc" id="L100">        mockMvc.perform(post(&quot;/transactions/neft&quot;)</span>
+<span class="fc" id="L101">                .contentType(MediaType.APPLICATION_JSON)</span>
+<span class="fc" id="L102">                .content(new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(neftTransactionDTO)))</span>
+<span class="fc" id="L103">                .andExpect(status().isOk());</span>
+<span class="fc" id="L104">    }</span>
+
+    @Test
+    public void testPerformUpiTransaction() throws Exception {
+<span class="fc" id="L108">        when(transactionService.performUpiTransaction(upiTransactionDTO)).thenReturn(&quot;Transaction Successful&quot;);</span>
+
+<span class="fc" id="L110">        mockMvc.perform(post(&quot;/transactions/upi&quot;)</span>
+<span class="fc" id="L111">                .contentType(MediaType.APPLICATION_JSON)</span>
+<span class="fc" id="L112">                .content(new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(upiTransactionDTO)))</span>
+<span class="fc" id="L113">                .andExpect(status().isOk());</span>
+<span class="fc" id="L114">    }</span>
+
+    @Test
+    public void testGetNeftTransactionHistoryByAccountNo() throws Exception {
+<span class="fc" id="L118">        List&lt;NEFTTransaction&gt; transactions = Arrays.asList(neftTransaction);</span>
+<span class="fc" id="L119">        when(transactionService.getNeftTransactionHistory(&quot;1234567890&quot;)).thenReturn(transactions);</span>
+
+<span class="fc" id="L121">        mockMvc.perform(get(&quot;/transactions/history/neft/1234567890&quot;))</span>
+<span class="fc" id="L122">                .andExpect(status().isOk());</span>
+<span class="fc" id="L123">    }</span>
+
+    @Test
+    public void testGetUpiTransactionHistoryByUpiId() throws Exception {
+<span class="fc" id="L127">        List&lt;UPITransaction&gt; transactions = Arrays.asList(upiTransaction);</span>
+<span class="fc" id="L128">        when(transactionService.getUpiTransactionHistory(&quot;user@upi&quot;)).thenReturn(transactions);</span>
+
+<span class="fc" id="L130">        mockMvc.perform(get(&quot;/transactions/history/upi/user@upi&quot;))</span>
+<span class="fc" id="L131">                .andExpect(status().isOk());</span>
+<span class="fc" id="L132">    }</span>
+
+    @Test
+    public void testGetNeftTransactionHistoryWithParams() throws Exception {
+<span class="fc" id="L136">        List&lt;NEFTTransaction&gt; transactions = Arrays.asList(neftTransaction);</span>
+<span class="fc" id="L137">        when(transactionService.getNeftTransactionHistory(&quot;1234567890&quot;, &quot;2024-01-01&quot;, &quot;2024-12-31&quot;)).thenReturn(transactions);</span>
+
+<span class="fc" id="L139">        mockMvc.perform(get(&quot;/transactions/history/neft&quot;)</span>
+<span class="fc" id="L140">                .param(&quot;accountNo&quot;, &quot;1234567890&quot;)</span>
+<span class="fc" id="L141">                .param(&quot;startDate&quot;, &quot;2024-01-01&quot;)</span>
+<span class="fc" id="L142">                .param(&quot;endDate&quot;, &quot;2024-12-31&quot;))</span>
+<span class="fc" id="L143">                .andExpect(status().isOk());</span>
+<span class="fc" id="L144">    }</span>
+
+    @Test
+    public void testGetUpiTransactionHistoryWithParams() throws Exception {
+<span class="fc" id="L148">        List&lt;UPITransaction&gt; transactions = Arrays.asList(upiTransaction);</span>
+<span class="fc" id="L149">        when(transactionService.getUpiTransactionHistory(&quot;user@upi&quot;, &quot;2024-01-01&quot;, &quot;2024-12-31&quot;)).thenReturn(transactions);</span>
+
+<span class="fc" id="L151">        mockMvc.perform(get(&quot;/transactions/history/upi&quot;)</span>
+<span class="fc" id="L152">                .param(&quot;upiId&quot;, &quot;user@upi&quot;)</span>
+<span class="fc" id="L153">                .param(&quot;startDate&quot;, &quot;2024-01-01&quot;)</span>
+<span class="fc" id="L154">                .param(&quot;endDate&quot;, &quot;2024-12-31&quot;))</span>
+<span class="fc" id="L155">                .andExpect(status().isOk());</span>
+<span class="fc" id="L156">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span>TransactionControllerTest (20-Dec-2024 6:20:32 pm)</div></body></html>

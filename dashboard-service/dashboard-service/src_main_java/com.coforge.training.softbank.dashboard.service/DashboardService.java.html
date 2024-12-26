@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>DashboardService.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">DashboardControllerTest (20-Dec-2024 5:44:39 pm)</a> &gt; <a href="../../index.html" class="el_group">dashboard-service</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">com.coforge.training.softbank.dashboard.service</a> &gt; <span class="el_source">DashboardService.java</span></div><h1>DashboardService.java</h1><pre class="source lang-java linenums">package com.coforge.training.softbank.dashboard.service;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.coforge.training.softbank.dashboard.dto.TransactionSummaryDTO;
+import com.coforge.training.softbank.dashboard.dto.UserDetailsDTO;
+import com.coforge.training.softbank.dashboard.feign.AuthenticationFeignClient;
+import com.coforge.training.softbank.dashboard.feign.TransactionFeignClient;
+
+
+/**
+* User   : Singuluri.Kumar
+* Date   : 16-Dec-2024
+* Time   : 10:09:39 pm
+* Project:dashboard-service
+**/
+
+@Service
+public class DashboardService {
+ 
+	private final TransactionFeignClient transactionFeignClient;
+	private final AuthenticationFeignClient authenticationFeignClient;
+ 
+<span class="nc" id="L28">	public DashboardService(TransactionFeignClient transactionFeignClient,AuthenticationFeignClient authenticationFeignClient) {</span>
+<span class="nc" id="L29">		this.transactionFeignClient = transactionFeignClient;</span>
+<span class="nc" id="L30">		this.authenticationFeignClient=authenticationFeignClient;</span>
+ 
+<span class="nc" id="L32">	}</span>
+ 
+	public List&lt;TransactionSummaryDTO&gt; getTransactionHistoryCustom(String accountNo, String upiId, String startDate, String endDate) {
+<span class="nc" id="L35">		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd&quot;);</span>
+<span class="nc" id="L36">		LocalDate start = LocalDate.parse(startDate, formatter);</span>
+<span class="nc" id="L37">		LocalDate end = LocalDate.parse(endDate, formatter);</span>
+ 
+<span class="nc" id="L39">		List&lt;TransactionSummaryDTO&gt; neftTransactions = transactionFeignClient.getNeftTransactionHistory(accountNo, startDate, endDate);</span>
+<span class="nc" id="L40">		List&lt;TransactionSummaryDTO&gt; upiTransactions = transactionFeignClient.getUpiTransactionHistory(upiId, startDate, endDate);</span>
+ 
+<span class="nc" id="L42">		neftTransactions.forEach(transaction -&gt; {</span>
+<span class="nc bnc" id="L43" title="All 2 branches missed.">			if (transaction.getFromAccount().equals(accountNo)) {</span>
+<span class="nc" id="L44">				transaction.setAmount(transaction.getAmount().negate()); // Debit</span>
+<span class="nc" id="L45">			} else {</span>
+<span class="nc" id="L46">				transaction.setAmount(transaction.getAmount()); // Credit</span>
+			}
+<span class="nc" id="L48">		});</span>
+ 
+<span class="nc" id="L50">		upiTransactions.forEach(transaction -&gt; {</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">			if (transaction.getFromUpiId().equals(upiId)) {</span>
+<span class="nc" id="L52">				transaction.setAmount(transaction.getAmount().negate()); // Debit</span>
+<span class="nc" id="L53">			} else {</span>
+<span class="nc" id="L54">				transaction.setAmount(transaction.getAmount()); // Credit</span>
+			}
+<span class="nc" id="L56">		});</span>
+ 
+<span class="nc" id="L58">		neftTransactions.addAll(upiTransactions);</span>
+<span class="nc" id="L59">		neftTransactions.sort((t1, t2) -&gt; t1.getTransactionDate().compareTo(t2.getTransactionDate()));</span>
+ 
+<span class="nc" id="L61">		return neftTransactions;</span>
+	}
+ 
+	public List&lt;TransactionSummaryDTO&gt; getTransactionHistory(String accountNo, String upiId, String period) {
+<span class="nc" id="L65">		LocalDate endDate = LocalDate.now();</span>
+		LocalDate startDate;
+ 
+<span class="nc bnc" id="L68" title="All 6 branches missed.">		switch (period.toLowerCase()) {</span>
+		case &quot;10days&quot;:
+<span class="nc" id="L70">			startDate = endDate.minusDays(10);</span>
+<span class="nc" id="L71">			break;</span>
+		case &quot;1month&quot;:
+<span class="nc" id="L73">			startDate = endDate.minusMonths(1);</span>
+<span class="nc" id="L74">			break;</span>
+		case &quot;3months&quot;:
+<span class="nc" id="L76">			startDate = endDate.minusMonths(3);</span>
+<span class="nc" id="L77">			break;</span>
+		case &quot;6months&quot;:
+<span class="nc" id="L79">			startDate = endDate.minusMonths(6);</span>
+<span class="nc" id="L80">			break;</span>
+		case &quot;1year&quot;:
+<span class="nc" id="L82">			startDate = endDate.minusYears(1);</span>
+<span class="nc" id="L83">			break;</span>
+		default:
+<span class="nc" id="L85">			throw new IllegalArgumentException(&quot;Invalid period specified.&quot;);</span>
+		}
+ 
+<span class="nc" id="L88">		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd&quot;);</span>
+<span class="nc" id="L89">		String formattedStartDate = startDate.format(formatter);</span>
+<span class="nc" id="L90">		String formattedEndDate = endDate.format(formatter);</span>
+ 
+<span class="nc" id="L92">		List&lt;TransactionSummaryDTO&gt; neftTransactions = transactionFeignClient.getNeftTransactionHistory(accountNo, formattedStartDate, formattedEndDate);</span>
+<span class="nc" id="L93">		List&lt;TransactionSummaryDTO&gt; upiTransactions = transactionFeignClient.getUpiTransactionHistory(upiId, formattedStartDate, formattedEndDate);</span>
+ 
+<span class="nc" id="L95">		neftTransactions.addAll(upiTransactions);</span>
+<span class="nc" id="L96">		neftTransactions.sort((t1, t2) -&gt; t1.getTransactionDate().compareTo(t2.getTransactionDate()));</span>
+ 
+<span class="nc" id="L98">		return neftTransactions;</span>
+	}
+ 
+	public UserDetailsDTO getUserDetails(String username) {
+<span class="nc" id="L102">	    return authenticationFeignClient.getUserDetailsByUsername(username);</span>
+	}
+	}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span>DashboardControllerTest (20-Dec-2024 5:44:39 pm)</div></body></html>

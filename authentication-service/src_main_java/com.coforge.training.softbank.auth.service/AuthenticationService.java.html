@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AuthenticationService.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AuthenticationControllerTest (20-Dec-2024 4:16:54 pm)</a> &gt; <a href="../../index.html" class="el_group">authentication-service</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">com.coforge.training.softbank.auth.service</a> &gt; <span class="el_source">AuthenticationService.java</span></div><h1>AuthenticationService.java</h1><pre class="source lang-java linenums">package com.coforge.training.softbank.auth.service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.coforge.training.softbank.auth.model.AuthenticationModel;
+import com.coforge.training.softbank.auth.repository.AuthenticationRepository;
+
+@Service
+public class AuthenticationService {
+
+    @Autowired
+    private final AuthenticationRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private static final String PASSWORD_REGEX = &quot;^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&amp;])[A-Za-z\\d@$!%*?&amp;]{8,}$&quot;;
+
+<span class="nc" id="L23">    public AuthenticationService(AuthenticationRepository userRepository, PasswordEncoder passwordEncoder) {</span>
+<span class="nc" id="L24">        this.userRepository = userRepository;</span>
+<span class="nc" id="L25">        this.passwordEncoder = passwordEncoder;</span>
+<span class="nc" id="L26">    }</span>
+
+    public AuthenticationModel registerUser(String username, String email, String accountNo, String authPin,
+                                            String loginPassword, String transactionPassword) {
+<span class="nc bnc" id="L30" title="All 4 branches missed.">        if (!isValidPassword(loginPassword) || !isValidPassword(transactionPassword)) {</span>
+<span class="nc" id="L31">            throw new IllegalArgumentException(&quot;Password does not meet security requirements.&quot;);</span>
+        }
+<span class="nc bnc" id="L33" title="All 2 branches missed.">        if (userRepository.findByAccountNo(accountNo).isPresent()) {</span>
+<span class="nc" id="L34">            throw new IllegalArgumentException(&quot;Account already registered.&quot;);</span>
+        }
+<span class="nc" id="L36">        AuthenticationModel user = new AuthenticationModel();</span>
+<span class="nc" id="L37">        user.setUsername(username);</span>
+<span class="nc" id="L38">        user.setEmail(email);</span>
+<span class="nc" id="L39">        user.setAccountNo(accountNo);</span>
+<span class="nc" id="L40">        user.setAuthPin(authPin);</span>
+<span class="nc" id="L41">        user.setLoginPassword(passwordEncoder.encode(loginPassword));</span>
+<span class="nc" id="L42">        user.setTransactionPassword(passwordEncoder.encode(transactionPassword));</span>
+<span class="nc" id="L43">        user.setCreatedAt(LocalDateTime.now());</span>
+<span class="nc" id="L44">        user.setUpiId(username + &quot;@softbank&quot;); // Set the UPI ID</span>
+<span class="nc" id="L45">        user.setBalance(BigDecimal.valueOf(1000));</span>
+<span class="nc" id="L46">        return userRepository.save(user);</span>
+    }
+
+    public Optional&lt;AuthenticationModel&gt; findByAccountNo(String accountNo) {
+<span class="nc" id="L50">        return userRepository.findByAccountNo(accountNo);</span>
+    }
+
+    public Optional&lt;AuthenticationModel&gt; findByUsername(String username) {
+<span class="nc" id="L54">        return userRepository.findByUsername(username);</span>
+    }
+
+    public String getLoginPasswordByAuthPin(String authPin) {
+<span class="nc" id="L58">        return userRepository.findByAuthPin(authPin)</span>
+<span class="nc" id="L59">                .map(user -&gt; passwordEncoder.encode(user.getLoginPassword()))</span>
+<span class="nc" id="L60">                .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Invalid Auth Pin.&quot;));</span>
+    }
+
+    private boolean isValidPassword(String password) {
+<span class="nc" id="L64">        return Pattern.matches(PASSWORD_REGEX, password);</span>
+    }
+
+    public void resetLoginPassword(String authPin, String newPassword) {
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        if (!isValidPassword(newPassword)) {</span>
+<span class="nc" id="L69">            throw new IllegalArgumentException(&quot;Password does not meet security requirements.&quot;);</span>
+        }
+<span class="nc" id="L71">        Optional&lt;AuthenticationModel&gt; optionalUser = userRepository.findByAuthPin(authPin);</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        if (optionalUser.isEmpty()) {</span>
+<span class="nc" id="L73">            throw new IllegalArgumentException(&quot;User not found.&quot;);</span>
+        }
+<span class="nc" id="L75">        AuthenticationModel user = optionalUser.get();</span>
+<span class="nc" id="L76">        user.setLoginPassword(passwordEncoder.encode(newPassword));</span>
+<span class="nc" id="L77">        userRepository.save(user);</span>
+<span class="nc" id="L78">    }</span>
+    
+ 
+public void resetTransactionPassword(String authPin, String newPassword) {
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        if (!isValidPassword(newPassword)) {</span>
+<span class="nc" id="L83">            throw new IllegalArgumentException(&quot;Password does not meet security requirements.&quot;);</span>
+        }
+<span class="nc" id="L85">        Optional&lt;AuthenticationModel&gt; optionalUser = userRepository.findByAuthPin(authPin);</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        if (optionalUser.isEmpty()) {</span>
+<span class="nc" id="L87">            throw new IllegalArgumentException(&quot;User not found.&quot;);</span>
+        }
+<span class="nc" id="L89">        AuthenticationModel user = optionalUser.get();</span>
+<span class="nc" id="L90">        user.setTransactionPassword(passwordEncoder.encode(newPassword));</span>
+<span class="nc" id="L91">        userRepository.save(user);</span>
+<span class="nc" id="L92">    }</span>
+ 
+ 
+    
+    
+    
+    //new 
+    
+    public String getUsernameByAuthPin(String authPin) {
+<span class="nc" id="L101">        return userRepository.findByAuthPin(authPin)</span>
+<span class="nc" id="L102">                .map(AuthenticationModel::getUsername)</span>
+<span class="nc" id="L103">                .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Auth Pin not found.&quot;));</span>
+    }
+
+    
+   
+
+    public void lockUser(AuthenticationModel user) {
+<span class="nc" id="L110">        user.setLocked(true);</span>
+<span class="nc" id="L111">        userRepository.save(user);</span>
+<span class="nc" id="L112">    }</span>
+
+    public void resetFailedAttempts(AuthenticationModel user) {
+<span class="nc" id="L115">        user.setFailedAttempts(0);</span>
+<span class="nc" id="L116">        userRepository.save(user);</span>
+<span class="nc" id="L117">    }</span>
+
+    public void incrementFailedAttempts(AuthenticationModel user) {
+<span class="nc" id="L120">        user.setFailedAttempts(user.getFailedAttempts() + 1);</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">        if (user.getFailedAttempts() &gt;= 3) {</span>
+<span class="nc" id="L122">            lockUser(user);</span>
+<span class="nc" id="L123">        } else {</span>
+<span class="nc" id="L124">            userRepository.save(user);</span>
+        }
+<span class="nc" id="L126">    }</span>
+
+    public boolean verifyLoginPassword(AuthenticationModel user, String rawPassword) {
+<span class="nc" id="L129">        return passwordEncoder.matches(rawPassword, user.getLoginPassword());</span>
+    }
+
+    public boolean verifyTransactionPassword(AuthenticationModel user, String rawPassword) {
+<span class="nc" id="L133">        return passwordEncoder.matches(rawPassword, user.getTransactionPassword());</span>
+    }
+    
+    public BigDecimal getBalance(String accountNo) {
+<span class="nc" id="L137">        AuthenticationModel user = userRepository.findByAccountNo(accountNo)</span>
+<span class="nc" id="L138">                .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Account not found.&quot;));</span>
+<span class="nc" id="L139">        return user.getBalance();</span>
+    }
+
+    public void updateBalance(String accountNo, BigDecimal newBalance) {
+<span class="nc" id="L143">        AuthenticationModel user = userRepository.findByAccountNo(accountNo)</span>
+<span class="nc" id="L144">                .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Account not found.&quot;));</span>
+<span class="nc" id="L145">        user.setBalance(newBalance);</span>
+<span class="nc" id="L146">        userRepository.save(user);</span>
+<span class="nc" id="L147">    }</span>
+
+    public boolean verifyAccount(String accountNo) {
+<span class="nc" id="L150">        return userRepository.findByAccountNo(accountNo).isPresent();</span>
+    }
+
+    public boolean verifyUpi(String upiId) {
+<span class="nc" id="L154">        return userRepository.findByUpiId(upiId).isPresent();</span>
+    }
+    
+    public BigDecimal getBalanceByUpi(String upiId) {
+<span class="nc" id="L158">        AuthenticationModel user = userRepository.findByUpiId(upiId)</span>
+<span class="nc" id="L159">                .orElseThrow(() -&gt; new IllegalArgumentException(&quot;UPI ID not found.&quot;));</span>
+<span class="nc" id="L160">        return user.getBalance();</span>
+    }
+
+    public void updateBalanceByUpi(String upiId, BigDecimal newBalance) {
+<span class="nc" id="L164">        AuthenticationModel user = userRepository.findByUpiId(upiId)</span>
+<span class="nc" id="L165">                .orElseThrow(() -&gt; new IllegalArgumentException(&quot;UPI ID not found.&quot;));</span>
+<span class="nc" id="L166">        user.setBalance(newBalance);</span>
+<span class="nc" id="L167">        userRepository.save(user);</span>
+<span class="nc" id="L168">    }</span>
+    public String depositMoney(String accountNo, BigDecimal amount) {
+<span class="nc" id="L170">        Optional&lt;AuthenticationModel&gt; userOpt = userRepository.findByAccountNo(accountNo);</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        if (userOpt.isEmpty()) {</span>
+<span class="nc" id="L172">            return &quot;Account number is not present.&quot;;</span>
+        }
+<span class="nc" id="L174">        AuthenticationModel user = userOpt.get();</span>
+<span class="nc" id="L175">        user.setBalance(user.getBalance().add(amount));</span>
+<span class="nc" id="L176">        userRepository.save(user);</span>
+<span class="nc" id="L177">        return &quot;Deposit successful.&quot;;</span>
+    }
+
+    public String withdrawMoney(String accountNo, BigDecimal amount) {
+<span class="nc" id="L181">        Optional&lt;AuthenticationModel&gt; userOpt = userRepository.findByAccountNo(accountNo);</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">        if (userOpt.isEmpty()) {</span>
+<span class="nc" id="L183">            return &quot;Account number is not present.&quot;;</span>
+        }
+<span class="nc" id="L185">        AuthenticationModel user = userOpt.get();</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        if (user.getBalance().compareTo(amount) &lt; 0) {</span>
+<span class="nc" id="L187">            return &quot;Insufficient balance.&quot;;</span>
+        }
+<span class="nc" id="L189">        user.setBalance(user.getBalance().subtract(amount));</span>
+<span class="nc" id="L190">        userRepository.save(user);</span>
+<span class="nc" id="L191">        return &quot;Withdrawal successful.&quot;;</span>
+    }
+    
+    public boolean verifyTransactionPassword(String accountNo, String rawPassword) {
+<span class="nc" id="L195">        AuthenticationModel user = userRepository.findByAccountNo(accountNo)</span>
+<span class="nc" id="L196">                .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Account number not found.&quot;));</span>
+<span class="nc" id="L197">        return passwordEncoder.matches(rawPassword, user.getTransactionPassword());</span>
+    }
+
+    public boolean verifyTransactionPasswordByUpi(String upiId, String rawPassword) {
+<span class="nc" id="L201">        AuthenticationModel user = userRepository.findByUpiId(upiId)</span>
+<span class="nc" id="L202">                .orElseThrow(() -&gt; new IllegalArgumentException(&quot;UPI ID not found.&quot;));</span>
+<span class="nc" id="L203">        return passwordEncoder.matches(rawPassword, user.getTransactionPassword());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span>AuthenticationControllerTest (20-Dec-2024 4:16:54 pm)</div></body></html>

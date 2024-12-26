@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ResourceNotFoundException.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AdminControllerTest (20-Dec-2024 4:40:09 pm)</a> &gt; <a href="../../index.html" class="el_group">admin-service</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">com.coforge.training.softbank.admin.exception</a> &gt; <span class="el_source">ResourceNotFoundException.java</span></div><h1>ResourceNotFoundException.java</h1><pre class="source lang-java linenums">package com.coforge.training.softbank.admin.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+/**
+* Author :Singuluri.Kumar
+* Date   :23-Nov-2024
+* Time   :5:01:50 pm
+* 
+**/
+/*
+ * ResourceNotFoundException - Custom Exception class
+ * It is used to signal when a requested resource (such as a product with a specific ID) 
+ * is not available in the database or other data sources.
+ * By creating a custom exception, you can provide more meaningful error messages and 
+ * handle specific cases of missing resources in a standardized way.
+ */
+
+/*
+ * @ResponseStatus(value = HttpStatus.NOT_FOUND): 
+ * This annotation automatically sets the HTTP status code to 404 (Not Found) when this exception is thrown.
+ */
+@ResponseStatus(value = HttpStatus.NOT_FOUND)
+public class ResourceNotFoundException extends Exception {
+
+	private static final long serialVersionUID = 1L;
+
+	public ResourceNotFoundException(String message) {
+<span class="nc" id="L30">		super(message);</span>
+		// TODO Auto-generated constructor stub
+<span class="nc" id="L32">	}</span>
+	
+	
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span>AdminControllerTest (20-Dec-2024 4:40:09 pm)</div></body></html>

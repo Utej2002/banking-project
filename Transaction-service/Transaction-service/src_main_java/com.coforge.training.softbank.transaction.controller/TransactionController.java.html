@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TransactionController.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">TransactionControllerTest (20-Dec-2024 6:20:32 pm)</a> &gt; <a href="../../index.html" class="el_group">Transaction-service</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">com.coforge.training.softbank.transaction.controller</a> &gt; <span class="el_source">TransactionController.java</span></div><h1>TransactionController.java</h1><pre class="source lang-java linenums">package com.coforge.training.softbank.transaction.controller;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.coforge.training.softbank.transaction.dto.NEFTTransactionDTO;
+import com.coforge.training.softbank.transaction.dto.UPITransactionDTO;
+import com.coforge.training.softbank.transaction.model.NEFTTransaction;
+import com.coforge.training.softbank.transaction.model.UPITransaction;
+import com.coforge.training.softbank.transaction.service.TransactionService;
+
+/**
+* User   : Singuluri.Kumar
+* Date   : 16-Dec-2024
+* Time   : 11:55:28 am
+* Project:Transaction-service
+**/
+@CrossOrigin(origins = &quot;http://localhost:4200&quot;)
+@RestController
+@RequestMapping(&quot;/transactions&quot;)
+public class TransactionController {
+
+    private final TransactionService transactionService;
+
+<span class="fc" id="L36">    public TransactionController(TransactionService transactionService) {</span>
+<span class="fc" id="L37">        this.transactionService = transactionService;</span>
+<span class="fc" id="L38">    }</span>
+
+    @PostMapping(&quot;/neft&quot;)
+    public ResponseEntity&lt;String&gt; performNeftTransaction(@RequestBody NEFTTransactionDTO transactionDTO) {
+<span class="fc" id="L42">        transactionDTO.setTransactionType(&quot;NEFT&quot;);</span>
+<span class="fc" id="L43">        String response = transactionService.performNeftTransaction(transactionDTO);</span>
+<span class="fc" id="L44">        return new ResponseEntity&lt;&gt;(response, HttpStatus.OK);</span>
+    }
+
+    @PostMapping(&quot;/upi&quot;)
+    public ResponseEntity&lt;String&gt; performUpiTransaction(@RequestBody UPITransactionDTO transactionDTO) {
+<span class="fc" id="L49">        transactionDTO.setTransactionType(&quot;UPI&quot;);</span>
+<span class="fc" id="L50">        String response = transactionService.performUpiTransaction(transactionDTO);</span>
+<span class="fc" id="L51">        return new ResponseEntity&lt;&gt;(response, HttpStatus.OK);</span>
+    }
+
+    @GetMapping(&quot;/history/neft/{accountNo}&quot;)
+    public ResponseEntity&lt;List&lt;NEFTTransaction&gt;&gt; getNeftTransactionHistory(@PathVariable String accountNo) {
+<span class="fc" id="L56">        List&lt;NEFTTransaction&gt; transactions = transactionService.getNeftTransactionHistory(accountNo);</span>
+<span class="fc" id="L57">        return new ResponseEntity&lt;&gt;(transactions, HttpStatus.OK);</span>
+    }
+
+    @GetMapping(&quot;/history/upi/{upiId}&quot;)
+    public ResponseEntity&lt;List&lt;UPITransaction&gt;&gt; getUpiTransactionHistory(@PathVariable String upiId) {
+<span class="fc" id="L62">        List&lt;UPITransaction&gt; transactions = transactionService.getUpiTransactionHistory(upiId);</span>
+<span class="fc" id="L63">        return new ResponseEntity&lt;&gt;(transactions, HttpStatus.OK);</span>
+    }
+    
+    @GetMapping(&quot;/history/neft&quot;)
+    public ResponseEntity&lt;List&lt;NEFTTransactionDTO&gt;&gt; getNeftTransactionHistory(@RequestParam String accountNo, @RequestParam String startDate, @RequestParam String endDate) {
+<span class="fc" id="L68">        List&lt;NEFTTransaction&gt; transactions = transactionService.getNeftTransactionHistory(accountNo, startDate, endDate);</span>
+<span class="fc" id="L69">        List&lt;NEFTTransactionDTO&gt; transactionDTOs = transactions.stream().map(this::convertToDTO).collect(Collectors.toList());</span>
+<span class="fc" id="L70">        return new ResponseEntity&lt;&gt;(transactionDTOs, HttpStatus.OK);</span>
+    }
+ 
+    @GetMapping(&quot;/history/upi&quot;)
+    public ResponseEntity&lt;List&lt;UPITransactionDTO&gt;&gt; getUpiTransactionHistory(@RequestParam String upiId, @RequestParam String startDate, @RequestParam String endDate) {
+<span class="fc" id="L75">        List&lt;UPITransaction&gt; transactions = transactionService.getUpiTransactionHistory(upiId, startDate, endDate);</span>
+<span class="fc" id="L76">        List&lt;UPITransactionDTO&gt; transactionDTOs = transactions.stream().map(this::convertToDTO).collect(Collectors.toList());</span>
+<span class="fc" id="L77">        return new ResponseEntity&lt;&gt;(transactionDTOs, HttpStatus.OK);</span>
+    }
+ 
+    private NEFTTransactionDTO convertToDTO(NEFTTransaction transaction) {
+<span class="fc" id="L81">        NEFTTransactionDTO dto = new NEFTTransactionDTO();</span>
+<span class="fc" id="L82">        dto.setId(transaction.getId());</span>
+<span class="fc" id="L83">        dto.setFromAccount(transaction.getFromAccount());</span>
+<span class="fc" id="L84">        dto.setToAccount(transaction.getToAccount());</span>
+<span class="fc" id="L85">        dto.setAmount(transaction.getAmount());</span>
+<span class="fc" id="L86">        dto.setTransactionType(transaction.getTransactionType());</span>
+<span class="fc" id="L87">        dto.setRemarks(transaction.getRemarks());</span>
+<span class="fc" id="L88">        dto.setTransactionDate(transaction.getTransactionDate());</span>
+<span class="fc" id="L89">        dto.setBalanceAfterTransaction(transaction.getBalanceAfterTransaction());</span>
+<span class="fc" id="L90">        return dto;</span>
+    }
+ 
+    private UPITransactionDTO convertToDTO(UPITransaction transaction) {
+<span class="fc" id="L94">        UPITransactionDTO dto = new UPITransactionDTO();</span>
+<span class="fc" id="L95">        dto.setId(transaction.getId());</span>
+<span class="fc" id="L96">        dto.setFromUpiId(transaction.getFromUpiId());</span>
+<span class="fc" id="L97">        dto.setToUpiId(transaction.getToUpiId());</span>
+<span class="fc" id="L98">        dto.setAmount(transaction.getAmount());</span>
+<span class="fc" id="L99">        dto.setTransactionType(transaction.getTransactionType());</span>
+<span class="fc" id="L100">        dto.setRemarks(transaction.getRemarks());</span>
+<span class="fc" id="L101">        dto.setTransactionDate(transaction.getTransactionDate());</span>
+<span class="fc" id="L102">        dto.setBalanceAfterTransaction(transaction.getBalanceAfterTransaction());</span>
+<span class="fc" id="L103">        return dto;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span>TransactionControllerTest (20-Dec-2024 6:20:32 pm)</div></body></html>

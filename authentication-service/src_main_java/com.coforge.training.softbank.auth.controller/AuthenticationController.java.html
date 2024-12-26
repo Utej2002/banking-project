@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AuthenticationController.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AuthenticationControllerTest (20-Dec-2024 4:16:54 pm)</a> &gt; <a href="../../index.html" class="el_group">authentication-service</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">com.coforge.training.softbank.auth.controller</a> &gt; <span class="el_source">AuthenticationController.java</span></div><h1>AuthenticationController.java</h1><pre class="source lang-java linenums">package com.coforge.training.softbank.auth.controller;
+
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.coforge.training.softbank.auth.dto.UserDetailsDTO;
+import com.coforge.training.softbank.auth.feign.UserRegistrationServiceFeignClient;
+import com.coforge.training.softbank.auth.model.AuthenticationModel;
+import com.coforge.training.softbank.auth.service.AuthenticationService;
+
+@RestController
+@RequestMapping(&quot;/auth&quot;)
+public class AuthenticationController {
+	@Autowired
+    private final AuthenticationService userService;
+ 
+    @Autowired
+    private final UserRegistrationServiceFeignClient userRegistrationServiceFeignClient;
+ 
+<span class="fc" id="L32">    public AuthenticationController(AuthenticationService userService,</span>
+                                    UserRegistrationServiceFeignClient userRegistrationServiceFeignClient) {
+<span class="fc" id="L34">        this.userService = userService;</span>
+<span class="fc" id="L35">        this.userRegistrationServiceFeignClient = userRegistrationServiceFeignClient;</span>
+<span class="fc" id="L36">    }</span>
+ 
+    @PostMapping(&quot;/register&quot;)
+    public ResponseEntity&lt;String&gt; register(@RequestBody Map&lt;String, String&gt; request) {
+<span class="fc" id="L40">        String username = request.get(&quot;username&quot;);</span>
+<span class="fc" id="L41">        String email = request.get(&quot;email&quot;);</span>
+<span class="fc" id="L42">        String accountNo = request.get(&quot;accountNo&quot;);</span>
+<span class="fc" id="L43">        String authPin = request.get(&quot;authPin&quot;);</span>
+<span class="fc" id="L44">        String loginPassword = request.get(&quot;loginPassword&quot;);</span>
+<span class="fc" id="L45">        String transactionPassword = request.get(&quot;transactionPassword&quot;);</span>
+ 
+        // Validate if account exists and is approved by admin
+<span class="fc" id="L48">        boolean isAccountValid = userRegistrationServiceFeignClient.verifyAccount(accountNo);</span>
+ 
+<span class="pc bpc" id="L50" title="1 of 2 branches missed.">        if (!isAccountValid) {</span>
+<span class="nc" id="L51">            return new ResponseEntity&lt;&gt;(&quot;Account number is not approved or does not exist.&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+ 
+        try {
+            // Register the user in Authentication Service
+<span class="fc" id="L56">            userService.registerUser(username, email, accountNo, authPin, loginPassword, transactionPassword);</span>
+<span class="fc" id="L57">            return new ResponseEntity&lt;&gt;(&quot;User registered successfully&quot;, HttpStatus.CREATED);</span>
+<span class="nc" id="L58">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L59">            return new ResponseEntity&lt;&gt;(ex.getMessage(), HttpStatus.BAD_REQUEST);</span>
+        }
+    }
+
+	@PostMapping(&quot;/forgot-password&quot;)
+	public ResponseEntity&lt;String&gt; forgotPassword(@RequestBody Map&lt;String, 
+			String&gt; request) {
+<span class="fc" id="L66">		String authPin = request.get(&quot;authPin&quot;);</span>
+<span class="pc bpc" id="L67" title="2 of 4 branches missed.">		if (authPin == null || authPin.isEmpty()) {</span>
+<span class="nc" id="L68">			return new ResponseEntity&lt;&gt;(&quot;Auth Pin is required.&quot;, HttpStatus.BAD_REQUEST);</span>
+		}
+		try {
+<span class="fc" id="L71">			String loginPassword = </span>
+<span class="fc" id="L72">					userService.getLoginPasswordByAuthPin(authPin);</span>
+<span class="fc" id="L73">			return new ResponseEntity&lt;&gt;(&quot;Your login password is: &quot; + loginPassword, HttpStatus.OK);</span>
+		} 
+<span class="nc" id="L75">		catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L76">			return new ResponseEntity&lt;&gt;(ex.getMessage(), </span>
+<span class="nc" id="L77">					HttpStatus.BAD_REQUEST);</span>
+		}
+	}
+	//new
+	@PostMapping(&quot;/forgot-username&quot;)
+    public ResponseEntity&lt;String&gt; forgotUsername(@RequestBody Map&lt;String, String&gt; request) {
+<span class="fc" id="L83">        String authPin = request.get(&quot;authPin&quot;);</span>
+<span class="pc bpc" id="L84" title="2 of 4 branches missed.">        if (authPin == null || authPin.isEmpty()) {</span>
+<span class="nc" id="L85">            return new ResponseEntity&lt;&gt;(&quot;Auth Pin is required.&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+        try {
+<span class="fc" id="L88">            String username = userService.getUsernameByAuthPin(authPin);</span>
+<span class="fc" id="L89">            return new ResponseEntity&lt;&gt;(&quot;Your username is: &quot; + username, HttpStatus.OK);</span>
+<span class="nc" id="L90">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L91">            return new ResponseEntity&lt;&gt;(ex.getMessage(), HttpStatus.BAD_REQUEST);</span>
+        }
+    }
+	
+	@PostMapping(&quot;/login&quot;)
+    public ResponseEntity&lt;String&gt; login(@RequestBody Map&lt;String, String&gt; request) {
+<span class="fc" id="L97">        System.out.println(&quot;Request received: &quot; + request);</span>
+<span class="fc" id="L98">        String username = request.get(&quot;username&quot;);</span>
+<span class="fc" id="L99">        String password = request.get(&quot;password&quot;);</span>
+<span class="pc bpc" id="L100" title="4 of 8 branches missed.">        if (username == null || username.isEmpty() || password == null || password.isEmpty()) {</span>
+<span class="nc" id="L101">            return new ResponseEntity&lt;&gt;(&quot;Required parameters 'username' and 'password' are not present.&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+<span class="fc" id="L103">        return userService.findByUsername(username)</span>
+<span class="fc" id="L104">                .map(user -&gt; {</span>
+<span class="pc bpc" id="L105" title="1 of 2 branches missed.">                    if (user.isLocked()) {</span>
+<span class="nc" id="L106">                        return new ResponseEntity&lt;&gt;(&quot;Account is locked&quot;, HttpStatus.FORBIDDEN);</span>
+                    }
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">                    if (userService.verifyLoginPassword(user, password)) {</span>
+<span class="fc" id="L109">                        userService.resetFailedAttempts(user);</span>
+<span class="fc" id="L110">                        return new ResponseEntity&lt;&gt;(&quot;Login successful&quot;, HttpStatus.OK);</span>
+                    } else {
+<span class="nc" id="L112">                        userService.incrementFailedAttempts(user);</span>
+<span class="nc" id="L113">                        return new ResponseEntity&lt;&gt;(&quot;Invalid credentials&quot;, HttpStatus.UNAUTHORIZED);</span>
+                    }
+                })
+<span class="fc" id="L116">                .orElse(new ResponseEntity&lt;&gt;(&quot;User not found&quot;, HttpStatus.NOT_FOUND));</span>
+    }
+
+	@PostMapping(&quot;/reset-login-password&quot;)
+	public ResponseEntity&lt;String&gt; resetLoginPassword(@RequestBody Map&lt;String, String&gt; request) {
+<span class="fc" id="L121">	    String authPin = request.get(&quot;authPin&quot;);</span>
+<span class="fc" id="L122">	    String newPassword = request.get(&quot;newPassword&quot;);</span>
+<span class="pc bpc" id="L123" title="4 of 8 branches missed.">	    if (authPin == null || authPin.isEmpty() || newPassword == null || newPassword.isEmpty()) {</span>
+<span class="nc" id="L124">	        return new ResponseEntity&lt;&gt;(&quot;Required parameters 'authPin' and 'newPassword' are not present.&quot;, HttpStatus.BAD_REQUEST);</span>
+	    }
+	    try {
+<span class="fc" id="L127">	        userService.resetLoginPassword(authPin, newPassword);</span>
+<span class="fc" id="L128">	        return new ResponseEntity&lt;&gt;(&quot;Login password reset successfully.&quot;, HttpStatus.OK);</span>
+<span class="nc" id="L129">	    } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L130">	        return new ResponseEntity&lt;&gt;(ex.getMessage(), HttpStatus.BAD_REQUEST);</span>
+	    }
+	}
+	
+    @PostMapping(&quot;/reset-transaction-password&quot;)
+    public ResponseEntity&lt;String&gt; resetTransactionPassword(@RequestBody Map&lt;String, String&gt; request) {
+<span class="fc" id="L136">        String authPin = request.get(&quot;authPin&quot;);</span>
+<span class="fc" id="L137">        String newPassword = request.get(&quot;newPassword&quot;);</span>
+<span class="pc bpc" id="L138" title="4 of 8 branches missed.">        if (authPin == null || authPin.isEmpty() || newPassword == null || newPassword.isEmpty()) {</span>
+<span class="nc" id="L139">            return new ResponseEntity&lt;&gt;(&quot;Required parameters 'authPin' and 'newPassword' are not present.&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+        try {
+<span class="fc" id="L142">            userService.resetTransactionPassword(authPin, newPassword);</span>
+<span class="fc" id="L143">            return new ResponseEntity&lt;&gt;(&quot;Transaction password reset successfully.&quot;, HttpStatus.OK);</span>
+<span class="nc" id="L144">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L145">            return new ResponseEntity&lt;&gt;(ex.getMessage(), HttpStatus.BAD_REQUEST);</span>
+        }
+    }
+    
+  
+    
+    // Endpoint to fetch user balance
+    @GetMapping(&quot;/balance&quot;)
+    public ResponseEntity&lt;BigDecimal&gt; getBalance(@RequestParam String accountNo) {
+<span class="fc" id="L154">        BigDecimal balance = userService.getBalance(accountNo);</span>
+<span class="fc" id="L155">        return new ResponseEntity&lt;&gt;(balance, HttpStatus.OK);</span>
+    }
+
+    // Endpoint to update user balance
+    @GetMapping(&quot;/update-balance&quot;)
+    public ResponseEntity&lt;Void&gt; updateBalance(@RequestParam String accountNo, @RequestParam BigDecimal newBalance) {
+<span class="fc" id="L161">        userService.updateBalance(accountNo, newBalance);</span>
+<span class="fc" id="L162">        return new ResponseEntity&lt;&gt;(HttpStatus.OK);</span>
+    }
+
+    // Endpoint to verify if an account exists
+    @GetMapping(&quot;/verify-account&quot;)
+    public ResponseEntity&lt;Boolean&gt; verifyAccount(@RequestParam(&quot;accountNo&quot;) String accountNo) {
+<span class="fc" id="L168">        boolean exists = userService.verifyAccount(accountNo);</span>
+<span class="fc" id="L169">        return new ResponseEntity&lt;&gt;(exists, HttpStatus.OK);</span>
+    }
+
+    // Endpoint to verify if a UPI ID exists
+    @GetMapping(&quot;/verify-upi&quot;)
+    public ResponseEntity&lt;Boolean&gt; verifyUpi(@RequestParam String upiId) {
+<span class="fc" id="L175">        boolean exists = userService.verifyUpi(upiId);</span>
+<span class="fc" id="L176">        return new ResponseEntity&lt;&gt;(exists, HttpStatus.OK);</span>
+    }
+
+    // Endpoint to fetch user balance by username
+    @GetMapping(&quot;/balance/{username}&quot;)
+    public ResponseEntity&lt;BigDecimal&gt; getBalanceByUsername(@PathVariable String username) {
+<span class="fc" id="L182">        Optional&lt;AuthenticationModel&gt; userOpt = userService.findByUsername(username);</span>
+<span class="pc bpc" id="L183" title="1 of 2 branches missed.">        if (userOpt.isPresent()) {</span>
+<span class="fc" id="L184">            AuthenticationModel user = userOpt.get();</span>
+<span class="fc" id="L185">            return ResponseEntity.ok(user.getBalance());</span>
+        } else {
+<span class="nc" id="L187">            return new ResponseEntity&lt;&gt;(HttpStatus.NOT_FOUND);</span>
+        }
+    }
+    
+    @GetMapping(&quot;/balance-by-upi&quot;)
+    public ResponseEntity&lt;BigDecimal&gt; getBalanceByUpi(@RequestParam String upiId) {
+<span class="fc" id="L193">        BigDecimal balance = userService.getBalanceByUpi(upiId);</span>
+<span class="fc" id="L194">        return new ResponseEntity&lt;&gt;(balance, HttpStatus.OK);</span>
+    }
+
+    @GetMapping(&quot;/update-balance-by-upi&quot;)
+    public ResponseEntity&lt;Void&gt; updateBalanceByUpi(@RequestParam String upiId, @RequestParam BigDecimal newBalance) {
+<span class="fc" id="L199">        userService.updateBalanceByUpi(upiId, newBalance);</span>
+<span class="fc" id="L200">        return new ResponseEntity&lt;&gt;(HttpStatus.OK);</span>
+    }
+    @PostMapping(&quot;/deposit&quot;)
+    public ResponseEntity&lt;String&gt; depositMoney(@RequestParam String accountNo, @RequestParam BigDecimal amount) {
+<span class="fc" id="L204">        String response = userService.depositMoney(accountNo, amount);</span>
+<span class="fc" id="L205">        return new ResponseEntity&lt;&gt;(response, HttpStatus.OK);</span>
+    }
+
+    @PostMapping(&quot;/withdraw&quot;)
+    public ResponseEntity&lt;String&gt; withdrawMoney(@RequestParam String accountNo, @RequestParam BigDecimal amount) {
+<span class="fc" id="L210">        String response = userService.withdrawMoney(accountNo, amount);</span>
+<span class="fc" id="L211">        return new ResponseEntity&lt;&gt;(response, HttpStatus.OK);</span>
+    }
+    
+    @PostMapping(&quot;/verify-transaction-password&quot;)
+    public ResponseEntity&lt;Boolean&gt; verifyTransactionPassword(@RequestParam String accountNo, @RequestParam String transactionPassword) {
+<span class="fc" id="L216">        boolean isValid = userService.verifyTransactionPassword(accountNo, transactionPassword);</span>
+<span class="fc" id="L217">        return new ResponseEntity&lt;&gt;(isValid, HttpStatus.OK);</span>
+    }
+
+    @PostMapping(&quot;/verify-transaction-password-upi&quot;)
+    public ResponseEntity&lt;Boolean&gt; verifyTransactionPasswordByUpi(@RequestParam String upiId, @RequestParam String transactionPassword) {
+<span class="fc" id="L222">        boolean isValid = userService.verifyTransactionPasswordByUpi(upiId, transactionPassword);</span>
+<span class="fc" id="L223">        return new ResponseEntity&lt;&gt;(isValid, HttpStatus.OK);</span>
+    }
+    
+    @GetMapping(&quot;/user-details&quot;)
+    public ResponseEntity&lt;UserDetailsDTO&gt; getUserDetailsByUsername(@RequestParam String username) {
+<span class="fc" id="L228">        Optional&lt;AuthenticationModel&gt; userOpt = userService.findByUsername(username);</span>
+<span class="pc bpc" id="L229" title="1 of 2 branches missed.">        if (userOpt.isPresent()) {</span>
+<span class="fc" id="L230">            AuthenticationModel user = userOpt.get();</span>
+<span class="fc" id="L231">            UserDetailsDTO userDetails = new UserDetailsDTO(user.getUsername(), user.getEmail(), user.getAccountNo(), user.getBalance(), user.getUpiId());</span>
+<span class="fc" id="L232">            return new ResponseEntity&lt;&gt;(userDetails, HttpStatus.OK);</span>
+        } else {
+<span class="nc" id="L234">            return new ResponseEntity&lt;&gt;(HttpStatus.NOT_FOUND);</span>
+        }
+    }  
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span>AuthenticationControllerTest (20-Dec-2024 4:16:54 pm)</div></body></html>

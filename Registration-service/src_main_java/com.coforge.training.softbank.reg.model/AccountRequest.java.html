@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AccountRequest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">UserRegistrationControllerTest (20-Dec-2024 3:51:26 pm)</a> &gt; <a href="../../index.html" class="el_group">Registration-service</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">com.coforge.training.softbank.reg.model</a> &gt; <span class="el_source">AccountRequest.java</span></div><h1>AccountRequest.java</h1><pre class="source lang-java linenums">package com.coforge.training.softbank.reg.model;
+
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+
+/**
+* User   : Singuluri.Kumar
+* Date   : 14-Dec-2024
+* Time   : 8:33:26 pm
+* Project:registration-service
+**/
+
+@Entity
+@Table(name = &quot;account_requests&quot;)
+@Setter
+@Getter
+<span class="fc" id="L28">public class AccountRequest {</span>
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+ 
+    @Column(nullable = false, unique = true)
+    private String accountNo;
+ 
+    @Column(nullable = false)
+    private String accountType;
+ 
+    @Column(nullable = false)
+<span class="fc" id="L40">    private String status = &quot;Pending&quot;; // 'Pending', 'Approved', 'Rejected'</span>
+ 
+<span class="fc" id="L42">    private LocalDateTime createdAt = LocalDateTime.now();</span>
+ 
+    private LocalDateTime approvedAt;
+    
+    @Lob
+    @Column(name = &quot;aadhar_pdf&quot;, columnDefinition = &quot;LONGBLOB&quot;)
+    private byte[] aadharPdf;
+
+    @Lob
+    @Column(name = &quot;passport_photo&quot;, columnDefinition = &quot;LONGBLOB&quot;)
+    private byte[] passportPhoto;
+ 
+    // Relationship with UserProfile
+    @OneToOne
+    @JoinColumn(name = &quot;user_id&quot;, nullable = false, unique = true)
+    @Setter
+    @Getter
+    private UserProfile userProfile;
+ 
+    // Getters and Setters
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span>UserRegistrationControllerTest (20-Dec-2024 3:51:26 pm)</div></body></html>

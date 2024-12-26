@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AdminControllerTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AdminControllerTest (20-Dec-2024 4:40:09 pm)</a> &gt; <a href="../../index.html" class="el_group">admin-service</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">com.coforge.training.softbank.admin.controller</a> &gt; <span class="el_source">AdminControllerTest.java</span></div><h1>AdminControllerTest.java</h1><pre class="source lang-java linenums">package com.coforge.training.softbank.admin.controller;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.math.BigDecimal;
+import java.util.Collections;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import com.coforge.training.softbank.admin.dto.AccountRequestDTO;
+import com.coforge.training.softbank.admin.feign.AuthenticationFeignClient;
+import com.coforge.training.softbank.admin.feign.UserRegistrationFeignClient;
+import com.coforge.training.softbank.admin.service.AdminService;
+
+@SpringBootTest
+<span class="fc" id="L30">class AdminControllerTest {</span>
+
+	@MockitoBean
+    private AdminService adminService;
+
+    @MockitoBean
+    private UserRegistrationFeignClient userRegistrationFeignClient;
+
+    @MockitoBean
+    private AuthenticationFeignClient authenticationFeignClient;
+
+    @Autowired
+    private AdminController adminController;
+
+    private MockMvc mockMvc;
+    @BeforeEach
+    public void setup() {
+<span class="fc" id="L47">        MockitoAnnotations.openMocks(this);</span>
+<span class="fc" id="L48">        this.mockMvc = MockMvcBuilders.standaloneSetup(adminController).build();</span>
+<span class="fc" id="L49">    }</span>
+
+    @Test
+    public void testLogin() throws Exception {
+<span class="fc" id="L53">        mockMvc.perform(post(&quot;/admin/login&quot;)</span>
+<span class="fc" id="L54">                .param(&quot;username&quot;, &quot;admin&quot;)</span>
+<span class="fc" id="L55">                .param(&quot;password&quot;, &quot;admin&quot;))</span>
+<span class="fc" id="L56">                .andExpect(status().isOk())</span>
+<span class="fc" id="L57">                .andExpect(content().string(&quot;Login successful&quot;));</span>
+
+<span class="fc" id="L59">        mockMvc.perform(post(&quot;/admin/login&quot;)</span>
+<span class="fc" id="L60">                .param(&quot;username&quot;, &quot;wrong&quot;)</span>
+<span class="fc" id="L61">                .param(&quot;password&quot;, &quot;wrong&quot;))</span>
+<span class="fc" id="L62">                .andExpect(status().isUnauthorized())</span>
+<span class="fc" id="L63">                .andExpect(content().string(&quot;Invalid credentials&quot;));</span>
+<span class="fc" id="L64">    }</span>
+
+    @Test
+    public void testGetPendingAccountRequests() throws Exception {
+<span class="fc" id="L68">        when(adminService.getPendingAccountRequests()).thenReturn(Collections.singletonList(new AccountRequestDTO()));</span>
+
+<span class="fc" id="L70">        mockMvc.perform(get(&quot;/admin/account-requests&quot;)</span>
+<span class="fc" id="L71">                .param(&quot;username&quot;, &quot;admin&quot;)</span>
+<span class="fc" id="L72">                .param(&quot;password&quot;, &quot;admin&quot;))</span>
+<span class="fc" id="L73">                .andExpect(status().isOk());</span>
+
+<span class="fc" id="L75">        mockMvc.perform(get(&quot;/admin/account-requests&quot;)</span>
+<span class="fc" id="L76">                .param(&quot;username&quot;, &quot;wrong&quot;)</span>
+<span class="fc" id="L77">                .param(&quot;password&quot;, &quot;wrong&quot;))</span>
+<span class="fc" id="L78">                .andExpect(status().isUnauthorized());</span>
+<span class="fc" id="L79">    }</span>
+
+    @Test
+    public void testApproveAccount() throws Exception {
+<span class="fc" id="L83">        when(adminService.approveAccount(anyString())).thenReturn(&quot;Account approved&quot;);</span>
+
+<span class="fc" id="L85">        mockMvc.perform(put(&quot;/admin/account-requests/approve/1234567890&quot;)</span>
+<span class="fc" id="L86">                .param(&quot;username&quot;, &quot;admin&quot;)</span>
+<span class="fc" id="L87">                .param(&quot;password&quot;, &quot;admin&quot;))</span>
+<span class="fc" id="L88">                .andExpect(status().isOk())</span>
+<span class="fc" id="L89">                .andExpect(content().string(&quot;Account approved&quot;));</span>
+
+<span class="fc" id="L91">        mockMvc.perform(put(&quot;/admin/account-requests/approve/1234567890&quot;)</span>
+<span class="fc" id="L92">                .param(&quot;username&quot;, &quot;wrong&quot;)</span>
+<span class="fc" id="L93">                .param(&quot;password&quot;, &quot;wrong&quot;))</span>
+<span class="fc" id="L94">                .andExpect(status().isUnauthorized())</span>
+<span class="fc" id="L95">                .andExpect(content().string(&quot;Unauthorized&quot;));</span>
+<span class="fc" id="L96">    }</span>
+
+    @Test
+    public void testRejectAccount() throws Exception {
+<span class="fc" id="L100">        when(adminService.rejectAccount(anyString())).thenReturn(&quot;Account rejected&quot;);</span>
+
+<span class="fc" id="L102">        mockMvc.perform(put(&quot;/admin/account-requests/reject/1234567890&quot;)</span>
+<span class="fc" id="L103">                .param(&quot;username&quot;, &quot;admin&quot;)</span>
+<span class="fc" id="L104">                .param(&quot;password&quot;, &quot;admin&quot;))</span>
+<span class="fc" id="L105">                .andExpect(status().isOk())</span>
+<span class="fc" id="L106">                .andExpect(content().string(&quot;Account rejected&quot;));</span>
+
+<span class="fc" id="L108">        mockMvc.perform(put(&quot;/admin/account-requests/reject/1234567890&quot;)</span>
+<span class="fc" id="L109">                .param(&quot;username&quot;, &quot;wrong&quot;)</span>
+<span class="fc" id="L110">                .param(&quot;password&quot;, &quot;wrong&quot;))</span>
+<span class="fc" id="L111">                .andExpect(status().isUnauthorized())</span>
+<span class="fc" id="L112">                .andExpect(content().string(&quot;Unauthorized&quot;));</span>
+<span class="fc" id="L113">    }</span>
+
+    @Test
+    public void testDepositMoney() throws Exception {
+<span class="fc" id="L117">        when(adminService.depositMoney(anyString(), any(BigDecimal.class))).thenReturn(&quot;Deposit successful&quot;);</span>
+
+<span class="fc" id="L119">        mockMvc.perform(post(&quot;/admin/accounts/deposit&quot;)</span>
+<span class="fc" id="L120">                .param(&quot;accountNo&quot;, &quot;1234567890&quot;)</span>
+<span class="fc" id="L121">                .param(&quot;amount&quot;, &quot;1000&quot;)</span>
+<span class="fc" id="L122">                .param(&quot;username&quot;, &quot;admin&quot;)</span>
+<span class="fc" id="L123">                .param(&quot;password&quot;, &quot;admin&quot;))</span>
+<span class="fc" id="L124">                .andExpect(status().isOk())</span>
+<span class="fc" id="L125">                .andExpect(content().string(&quot;Deposit successful&quot;));</span>
+
+<span class="fc" id="L127">        mockMvc.perform(post(&quot;/admin/accounts/deposit&quot;)</span>
+<span class="fc" id="L128">                .param(&quot;accountNo&quot;, &quot;1234567890&quot;)</span>
+<span class="fc" id="L129">                .param(&quot;amount&quot;, &quot;1000&quot;)</span>
+<span class="fc" id="L130">                .param(&quot;username&quot;, &quot;wrong&quot;)</span>
+<span class="fc" id="L131">                .param(&quot;password&quot;, &quot;wrong&quot;))</span>
+<span class="fc" id="L132">                .andExpect(status().isUnauthorized())</span>
+<span class="fc" id="L133">                .andExpect(content().string(&quot;Unauthorized&quot;));</span>
+<span class="fc" id="L134">    }</span>
+
+    @Test
+    public void testWithdrawMoney() throws Exception {
+<span class="fc" id="L138">        when(adminService.withdrawMoney(anyString(), any(BigDecimal.class))).thenReturn(&quot;Withdrawal successful&quot;);</span>
+
+<span class="fc" id="L140">        mockMvc.perform(post(&quot;/admin/accounts/withdraw&quot;)</span>
+<span class="fc" id="L141">                .param(&quot;accountNo&quot;, &quot;1234567890&quot;)</span>
+<span class="fc" id="L142">                .param(&quot;amount&quot;, &quot;500&quot;)</span>
+<span class="fc" id="L143">                .param(&quot;username&quot;, &quot;admin&quot;)</span>
+<span class="fc" id="L144">                .param(&quot;password&quot;, &quot;admin&quot;))</span>
+<span class="fc" id="L145">                .andExpect(status().isOk())</span>
+<span class="fc" id="L146">                .andExpect(content().string(&quot;Withdrawal successful&quot;));</span>
+
+<span class="fc" id="L148">        mockMvc.perform(post(&quot;/admin/accounts/withdraw&quot;)</span>
+<span class="fc" id="L149">                .param(&quot;accountNo&quot;, &quot;1234567890&quot;)</span>
+<span class="fc" id="L150">                .param(&quot;amount&quot;, &quot;500&quot;)</span>
+<span class="fc" id="L151">                .param(&quot;username&quot;, &quot;wrong&quot;)</span>
+<span class="fc" id="L152">                .param(&quot;password&quot;, &quot;wrong&quot;))</span>
+<span class="fc" id="L153">                .andExpect(status().isUnauthorized())</span>
+<span class="fc" id="L154">                .andExpect(content().string(&quot;Unauthorized&quot;));</span>
+<span class="fc" id="L155">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span>AdminControllerTest (20-Dec-2024 4:40:09 pm)</div></body></html>

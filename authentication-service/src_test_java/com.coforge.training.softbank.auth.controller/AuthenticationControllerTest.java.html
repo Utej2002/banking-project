@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AuthenticationControllerTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AuthenticationControllerTest (20-Dec-2024 4:16:54 pm)</a> &gt; <a href="../../index.html" class="el_group">authentication-service</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">com.coforge.training.softbank.auth.controller</a> &gt; <span class="el_source">AuthenticationControllerTest.java</span></div><h1>AuthenticationControllerTest.java</h1><pre class="source lang-java linenums">package com.coforge.training.softbank.auth.controller;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import com.coforge.training.softbank.auth.feign.UserRegistrationServiceFeignClient;
+import com.coforge.training.softbank.auth.model.AuthenticationModel;
+import com.coforge.training.softbank.auth.service.AuthenticationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+@SpringBootTest
+<span class="fc" id="L33">class AuthenticationControllerTest {</span>
+
+	 @MockitoBean
+	    private AuthenticationService userService;
+
+	 @MockitoBean
+	    private UserRegistrationServiceFeignClient userRegistrationServiceFeignClient;
+
+	    @Autowired
+	    private AuthenticationController authenticationController;
+
+	    private MockMvc mockMvc;
+
+	    @BeforeEach
+	    public void setup() {
+<span class="fc" id="L48">	        MockitoAnnotations.openMocks(this);</span>
+<span class="fc" id="L49">	        this.mockMvc = MockMvcBuilders.standaloneSetup(authenticationController).build();</span>
+<span class="fc" id="L50">	    }</span>
+
+	    @Test
+	    public void testRegisterUser() throws Exception {
+<span class="fc" id="L54">	        Map&lt;String, String&gt; request = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L55">	        request.put(&quot;username&quot;, &quot;testuser&quot;);</span>
+<span class="fc" id="L56">	        request.put(&quot;email&quot;, &quot;testuser@example.com&quot;);</span>
+<span class="fc" id="L57">	        request.put(&quot;accountNo&quot;, &quot;1234567890&quot;);</span>
+<span class="fc" id="L58">	        request.put(&quot;authPin&quot;, &quot;1234&quot;);</span>
+<span class="fc" id="L59">	        request.put(&quot;loginPassword&quot;, &quot;password&quot;);</span>
+<span class="fc" id="L60">	        request.put(&quot;transactionPassword&quot;, &quot;transpassword&quot;);</span>
+
+<span class="fc" id="L62">	        when(userRegistrationServiceFeignClient.verifyAccount(anyString())).thenReturn(true);</span>
+
+<span class="fc" id="L64">	        mockMvc.perform(post(&quot;/auth/register&quot;)</span>
+<span class="fc" id="L65">	                .contentType(MediaType.APPLICATION_JSON)</span>
+<span class="fc" id="L66">	                .content(new ObjectMapper().writeValueAsString(request)))</span>
+<span class="fc" id="L67">	                .andExpect(status().isCreated());</span>
+<span class="fc" id="L68">	    }</span>
+
+	    @Test
+	    public void testForgotPassword() throws Exception {
+<span class="fc" id="L72">	        Map&lt;String, String&gt; request = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L73">	        request.put(&quot;authPin&quot;, &quot;1234&quot;);</span>
+
+<span class="fc" id="L75">	        when(userService.getLoginPasswordByAuthPin(anyString())).thenReturn(&quot;password&quot;);</span>
+
+<span class="fc" id="L77">	        mockMvc.perform(post(&quot;/auth/forgot-password&quot;)</span>
+<span class="fc" id="L78">	                .contentType(MediaType.APPLICATION_JSON)</span>
+<span class="fc" id="L79">	                .content(new ObjectMapper().writeValueAsString(request)))</span>
+<span class="fc" id="L80">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L81">	    }</span>
+
+	    @Test
+	    public void testForgotUsername() throws Exception {
+<span class="fc" id="L85">	        Map&lt;String, String&gt; request = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L86">	        request.put(&quot;authPin&quot;, &quot;1234&quot;);</span>
+
+<span class="fc" id="L88">	        when(userService.getUsernameByAuthPin(anyString())).thenReturn(&quot;testuser&quot;);</span>
+
+<span class="fc" id="L90">	        mockMvc.perform(post(&quot;/auth/forgot-username&quot;)</span>
+<span class="fc" id="L91">	                .contentType(MediaType.APPLICATION_JSON)</span>
+<span class="fc" id="L92">	                .content(new ObjectMapper().writeValueAsString(request)))</span>
+<span class="fc" id="L93">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L94">	    }</span>
+
+	    @Test
+	    public void testLogin() throws Exception {
+<span class="fc" id="L98">	        Map&lt;String, String&gt; request = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L99">	        request.put(&quot;username&quot;, &quot;testuser&quot;);</span>
+<span class="fc" id="L100">	        request.put(&quot;password&quot;, &quot;password&quot;);</span>
+
+<span class="fc" id="L102">	        AuthenticationModel user = new AuthenticationModel();</span>
+<span class="fc" id="L103">	        user.setUsername(&quot;testuser&quot;);</span>
+<span class="fc" id="L104">	        user.setLoginPassword(&quot;password&quot;);</span>
+
+<span class="fc" id="L106">	        when(userService.findByUsername(anyString())).thenReturn(Optional.of(user));</span>
+<span class="fc" id="L107">	        when(userService.verifyLoginPassword(user, &quot;password&quot;)).thenReturn(true);</span>
+
+<span class="fc" id="L109">	        mockMvc.perform(post(&quot;/auth/login&quot;)</span>
+<span class="fc" id="L110">	                .contentType(MediaType.APPLICATION_JSON)</span>
+<span class="fc" id="L111">	                .content(new ObjectMapper().writeValueAsString(request)))</span>
+<span class="fc" id="L112">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L113">	    }</span>
+
+	    @Test
+	    public void testResetLoginPassword() throws Exception {
+<span class="fc" id="L117">	        Map&lt;String, String&gt; request = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L118">	        request.put(&quot;authPin&quot;, &quot;1234&quot;);</span>
+<span class="fc" id="L119">	        request.put(&quot;newPassword&quot;, &quot;newpassword&quot;);</span>
+
+<span class="fc" id="L121">	        mockMvc.perform(post(&quot;/auth/reset-login-password&quot;)</span>
+<span class="fc" id="L122">	                .contentType(MediaType.APPLICATION_JSON)</span>
+<span class="fc" id="L123">	                .content(new ObjectMapper().writeValueAsString(request)))</span>
+<span class="fc" id="L124">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L125">	    }</span>
+
+	    @Test
+	    public void testResetTransactionPassword() throws Exception {
+<span class="fc" id="L129">	        Map&lt;String, String&gt; request = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L130">	        request.put(&quot;authPin&quot;, &quot;1234&quot;);</span>
+<span class="fc" id="L131">	        request.put(&quot;newPassword&quot;, &quot;newpassword&quot;);</span>
+
+<span class="fc" id="L133">	        mockMvc.perform(post(&quot;/auth/reset-transaction-password&quot;)</span>
+<span class="fc" id="L134">	                .contentType(MediaType.APPLICATION_JSON)</span>
+<span class="fc" id="L135">	                .content(new ObjectMapper().writeValueAsString(request)))</span>
+<span class="fc" id="L136">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L137">	    }</span>
+
+	    @Test
+	    public void testGetBalance() throws Exception {
+<span class="fc" id="L141">	        when(userService.getBalance(anyString())).thenReturn(BigDecimal.valueOf(1000));</span>
+
+<span class="fc" id="L143">	        mockMvc.perform(get(&quot;/auth/balance&quot;)</span>
+<span class="fc" id="L144">	                .param(&quot;accountNo&quot;, &quot;1234567890&quot;))</span>
+<span class="fc" id="L145">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L146">	    }</span>
+
+	    @Test
+	    public void testUpdateBalance() throws Exception {
+<span class="fc" id="L150">	        mockMvc.perform(get(&quot;/auth/update-balance&quot;)</span>
+<span class="fc" id="L151">	                .param(&quot;accountNo&quot;, &quot;1234567890&quot;)</span>
+<span class="fc" id="L152">	                .param(&quot;newBalance&quot;, &quot;2000&quot;))</span>
+<span class="fc" id="L153">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L154">	    }</span>
+
+	    @Test
+	    public void testVerifyAccount() throws Exception {
+<span class="fc" id="L158">	        when(userService.verifyAccount(anyString())).thenReturn(true);</span>
+
+<span class="fc" id="L160">	        mockMvc.perform(get(&quot;/auth/verify-account&quot;)</span>
+<span class="fc" id="L161">	                .param(&quot;accountNo&quot;, &quot;1234567890&quot;))</span>
+<span class="fc" id="L162">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L163">	    }</span>
+
+	    @Test
+	    public void testVerifyUpi() throws Exception {
+<span class="fc" id="L167">	        when(userService.verifyUpi(anyString())).thenReturn(true);</span>
+
+<span class="fc" id="L169">	        mockMvc.perform(get(&quot;/auth/verify-upi&quot;)</span>
+<span class="fc" id="L170">	                .param(&quot;upiId&quot;, &quot;test@upi&quot;))</span>
+<span class="fc" id="L171">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L172">	    }</span>
+
+	    @Test
+	    public void testGetBalanceByUsername() throws Exception {
+<span class="fc" id="L176">	        AuthenticationModel user = new AuthenticationModel();</span>
+<span class="fc" id="L177">	        user.setUsername(&quot;testuser&quot;);</span>
+<span class="fc" id="L178">	        user.setBalance(BigDecimal.valueOf(1000));</span>
+
+<span class="fc" id="L180">	        when(userService.findByUsername(anyString())).thenReturn(Optional.of(user));</span>
+
+<span class="fc" id="L182">	        mockMvc.perform(get(&quot;/auth/balance/testuser&quot;))</span>
+<span class="fc" id="L183">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L184">	    }</span>
+
+	    @Test
+	    public void testGetBalanceByUpi() throws Exception {
+<span class="fc" id="L188">	        when(userService.getBalanceByUpi(anyString())).thenReturn(BigDecimal.valueOf(1000));</span>
+
+<span class="fc" id="L190">	        mockMvc.perform(get(&quot;/auth/balance-by-upi&quot;)</span>
+<span class="fc" id="L191">	                .param(&quot;upiId&quot;, &quot;test@upi&quot;))</span>
+<span class="fc" id="L192">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L193">	    }</span>
+
+	    @Test
+	    public void testUpdateBalanceByUpi() throws Exception {
+<span class="fc" id="L197">	        mockMvc.perform(get(&quot;/auth/update-balance-by-upi&quot;)</span>
+<span class="fc" id="L198">	                .param(&quot;upiId&quot;, &quot;test@upi&quot;)</span>
+<span class="fc" id="L199">	                .param(&quot;newBalance&quot;, &quot;2000&quot;))</span>
+<span class="fc" id="L200">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L201">	    }</span>
+
+	    @Test
+	    public void testDepositMoney() throws Exception {
+<span class="fc" id="L205">	        when(userService.depositMoney(anyString(), any(BigDecimal.class))).thenReturn(&quot;Deposit successful&quot;);</span>
+
+<span class="fc" id="L207">	        mockMvc.perform(post(&quot;/auth/deposit&quot;)</span>
+<span class="fc" id="L208">	                .param(&quot;accountNo&quot;, &quot;1234567890&quot;)</span>
+<span class="fc" id="L209">	                .param(&quot;amount&quot;, &quot;1000&quot;))</span>
+<span class="fc" id="L210">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L211">	    }</span>
+
+	    @Test
+	    public void testWithdrawMoney() throws Exception {
+<span class="fc" id="L215">	        when(userService.withdrawMoney(anyString(), any(BigDecimal.class))).thenReturn(&quot;Withdrawal successful&quot;);</span>
+
+<span class="fc" id="L217">	        mockMvc.perform(post(&quot;/auth/withdraw&quot;)</span>
+<span class="fc" id="L218">	                .param(&quot;accountNo&quot;, &quot;1234567890&quot;)</span>
+<span class="fc" id="L219">	                .param(&quot;amount&quot;, &quot;500&quot;))</span>
+<span class="fc" id="L220">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L221">	    }</span>
+
+	    @Test
+	    public void testVerifyTransactionPassword() throws Exception {
+<span class="fc" id="L225">	        when(userService.verifyTransactionPassword(anyString(), anyString())).thenReturn(true);</span>
+
+<span class="fc" id="L227">	        mockMvc.perform(post(&quot;/auth/verify-transaction-password&quot;)</span>
+<span class="fc" id="L228">	                .param(&quot;accountNo&quot;, &quot;1234567890&quot;)</span>
+<span class="fc" id="L229">	                .param(&quot;transactionPassword&quot;, &quot;transpassword&quot;))</span>
+<span class="fc" id="L230">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L231">	    }</span>
+
+	    @Test
+	    public void testVerifyTransactionPasswordByUpi() throws Exception {
+<span class="fc" id="L235">	        when(userService.verifyTransactionPasswordByUpi(anyString(), anyString())).thenReturn(true);</span>
+
+<span class="fc" id="L237">	        mockMvc.perform(post(&quot;/auth/verify-transaction-password-upi&quot;)</span>
+<span class="fc" id="L238">	                .param(&quot;upiId&quot;, &quot;test@upi&quot;)</span>
+<span class="fc" id="L239">	                .param(&quot;transactionPassword&quot;, &quot;transpassword&quot;))</span>
+<span class="fc" id="L240">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L241">	    }</span>
+
+	    @Test
+	    public void testGetUserDetailsByUsername() throws Exception {
+<span class="fc" id="L245">	        AuthenticationModel user = new AuthenticationModel();</span>
+<span class="fc" id="L246">	        user.setUsername(&quot;testuser&quot;);</span>
+<span class="fc" id="L247">	        user.setEmail(&quot;testuser@example.com&quot;);</span>
+<span class="fc" id="L248">	        user.setAccountNo(&quot;1234567890&quot;);</span>
+<span class="fc" id="L249">	        user.setBalance(BigDecimal.valueOf(1000));</span>
+<span class="fc" id="L250">	        user.setUpiId(&quot;test@upi&quot;);</span>
+
+<span class="fc" id="L252">	        when(userService.findByUsername(anyString())).thenReturn(Optional.of(user));</span>
+
+<span class="fc" id="L254">	        mockMvc.perform(get(&quot;/auth/user-details&quot;)</span>
+<span class="fc" id="L255">	                .param(&quot;username&quot;, &quot;testuser&quot;))</span>
+<span class="fc" id="L256">	                .andExpect(status().isOk());</span>
+<span class="fc" id="L257">	    }</span>
+	}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span>AuthenticationControllerTest (20-Dec-2024 4:16:54 pm)</div></body></html>

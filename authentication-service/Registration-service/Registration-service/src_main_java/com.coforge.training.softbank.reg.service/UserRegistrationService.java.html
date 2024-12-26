@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>UserRegistrationService.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">UserRegistrationControllerTest (20-Dec-2024 4:20:52 pm)</a> &gt; <a href="../../index.html" class="el_group">Registration-service</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">com.coforge.training.softbank.reg.service</a> &gt; <span class="el_source">UserRegistrationService.java</span></div><h1>UserRegistrationService.java</h1><pre class="source lang-java linenums">package com.coforge.training.softbank.reg.service;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.coforge.training.softbank.reg.feign.AuthServiceFeignClient;
+import com.coforge.training.softbank.reg.model.AccountRequest;
+import com.coforge.training.softbank.reg.model.UserProfile;
+import com.coforge.training.softbank.reg.repository.AccountRequestRepository;
+import com.coforge.training.softbank.reg.repository.UserProfileRepository;
+
+
+/**
+* User   : Singuluri.Kumar
+* Date   : 14-Dec-2024
+* Time   : 8:50:26 pm
+* Project:registration-service
+**/
+
+@Service
+public class UserRegistrationService {
+ 
+    private final UserProfileRepository userProfileRepository;
+    private final AccountRequestRepository accountRequestRepository;
+    private final AuthServiceFeignClient authServiceFeignClient;
+ 
+<span class="nc" id="L31">    public UserRegistrationService(UserProfileRepository userProfileRepository,</span>
+                                   AccountRequestRepository accountRequestRepository,
+                                   AuthServiceFeignClient authServiceFeignClient) {
+<span class="nc" id="L34">        this.userProfileRepository = userProfileRepository;</span>
+<span class="nc" id="L35">        this.accountRequestRepository = accountRequestRepository;</span>
+<span class="nc" id="L36">        this.authServiceFeignClient = authServiceFeignClient;</span>
+<span class="nc" id="L37">    }</span>
+ 
+    public String createAccountRequest(UserProfile userProfile, String accountType, byte[] aadharPdf, byte[] passportPhoto) {
+        // Save user profile
+<span class="nc" id="L41">        userProfile.setAadharPdf(aadharPdf);</span>
+<span class="nc" id="L42">        userProfile.setPassportPhoto(passportPhoto);</span>
+<span class="nc" id="L43">        UserProfile savedProfile = userProfileRepository.save(userProfile);</span>
+
+        // Create account request and link it to the saved user profile
+<span class="nc" id="L46">        AccountRequest accountRequest = new AccountRequest();</span>
+<span class="nc" id="L47">        accountRequest.setUserProfile(savedProfile); // Set the relationship</span>
+<span class="nc" id="L48">        accountRequest.setAccountType(accountType);</span>
+<span class="nc" id="L49">        accountRequest.setAccountNo(generateAccountNo());</span>
+<span class="nc" id="L50">        accountRequest.setAadharPdf(aadharPdf);</span>
+<span class="nc" id="L51">        accountRequest.setPassportPhoto(passportPhoto);</span>
+
+<span class="nc" id="L53">        savedProfile.setAccountRequest(accountRequest); // Update the reverse relationship</span>
+
+        // Save account request
+<span class="nc" id="L56">        accountRequestRepository.save(accountRequest);</span>
+
+<span class="nc" id="L58">        return &quot;Account request created successfully&quot;;</span>
+    }
+ 
+    public String registerForInternetBanking(String accountNo, String username, String loginPassword,
+                                             String transactionPassword, String email, String authPin) {
+        // Check if account exists
+<span class="nc" id="L64">        AccountRequest accountRequest = accountRequestRepository.findByAccountNo(accountNo)</span>
+<span class="nc" id="L65">                .orElseThrow(() -&gt; new ResponseStatusException(BAD_REQUEST, &quot;Account does not exist&quot;));</span>
+ 
+        // Check if account is approved
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        if (!&quot;Approved&quot;.equalsIgnoreCase(accountRequest.getStatus())) {</span>
+<span class="nc" id="L69">            throw new ResponseStatusException(BAD_REQUEST, &quot;Account is not approved for internet banking&quot;);</span>
+        }
+ 
+        // Call Authentication Service to register user
+<span class="nc" id="L73">        AuthServiceFeignClient.AuthUserRequest authUserRequest = new AuthServiceFeignClient.AuthUserRequest();</span>
+<span class="nc" id="L74">        authUserRequest.setUsername(username);</span>
+<span class="nc" id="L75">        authUserRequest.setEmail(email);</span>
+<span class="nc" id="L76">        authUserRequest.setAccountNo(accountNo);</span>
+<span class="nc" id="L77">        authUserRequest.setAuthPin(authPin);</span>
+<span class="nc" id="L78">        authUserRequest.setLoginPassword(loginPassword);</span>
+<span class="nc" id="L79">        authUserRequest.setTransactionPassword(transactionPassword);</span>
+ 
+<span class="nc" id="L81">        return authServiceFeignClient.registerUser(authUserRequest);</span>
+    }
+ 
+    private String generateAccountNo() {
+<span class="nc" id="L85">        return &quot;SB&quot; + System.currentTimeMillis(); // Simple account number generator</span>
+    }
+    
+    public boolean isAccountApproved(String accountNo) {
+        // Find account by accountNo
+<span class="nc" id="L90">        AccountRequest accountRequest = accountRequestRepository.findByAccountNo(accountNo).orElse(null);</span>
+ 
+        // If account does not exist or is not approved, return false
+<span class="nc bnc" id="L93" title="All 4 branches missed.">        return accountRequest != null &amp;&amp; &quot;Approved&quot;.equals(accountRequest.getStatus());</span>
+    }
+    
+    // Fetch all pending account requests
+    public List&lt;AccountRequest&gt; getPendingAccountRequests() {
+<span class="nc" id="L98">        return accountRequestRepository.findByStatus(&quot;Pending&quot;);</span>
+    }
+ 
+    public boolean approveAccount(String accountNo) {
+<span class="nc" id="L102">        AccountRequest accountRequest = accountRequestRepository.findByAccountNo(accountNo).orElse(null);</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        if (accountRequest == null) {</span>
+<span class="nc" id="L104">            return false;</span>
+        }
+<span class="nc" id="L106">        accountRequest.setStatus(&quot;Approved&quot;);</span>
+<span class="nc" id="L107">        accountRequest.setApprovedAt(java.time.LocalDateTime.now());</span>
+<span class="nc" id="L108">        accountRequestRepository.save(accountRequest);</span>
+<span class="nc" id="L109">        return true;</span>
+    }
+ 
+    public boolean rejectAccount(String accountNo) {
+<span class="nc" id="L113">        AccountRequest accountRequest = accountRequestRepository.findByAccountNo(accountNo).orElse(null);</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        if (accountRequest == null) {</span>
+<span class="nc" id="L115">            return false;</span>
+        }
+<span class="nc" id="L117">        accountRequest.setStatus(&quot;Rejected&quot;);</span>
+<span class="nc" id="L118">        accountRequestRepository.save(accountRequest);</span>
+<span class="nc" id="L119">        return true;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span>UserRegistrationControllerTest (20-Dec-2024 4:20:52 pm)</div></body></html>
